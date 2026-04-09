@@ -29,6 +29,7 @@ import { RpgClientObject } from "@rpgjs/client";
 import { withMobile } from "@rpgjs/client";
 import { provideActionBattle } from "@rpgjs/action-battle/client";
 import { HudComponent } from "@rpgjs/client";
+import MobileActions from "../modules/are-logic/gui/MobileActions.vue";
 
 
 export default {
@@ -117,21 +118,7 @@ export default {
            
           }
         },
-        sceneMap: { 
-          onBeforeLoading: (scene) => {
-            console.log(scene)
-            const gui = inject(RpgGui)
-            gui.display('fade', {
-              fadeIn: false,
-              duration: 5000
-            })
-          },
-          onAfterLoading: async (scene) => {
-            const gui = inject(RpgGui)
-            await new Promise(resolve => setTimeout(resolve, 5000))
-            gui.hide('fade')
-          },
-        },
+        sceneMap: {},
         sounds: [
           {
             id: "typewriter",
@@ -158,24 +145,9 @@ export default {
         ],
         gui: [
           {
-            id: "rpg-title-screen",
-            component: TitleScreenComponent,
+            id: "rpg-mobile-actions",
+            component: MobileActions,
             autoDisplay: true,
-            data: {
-              title: "Chronicles",
-              subtitle: "of the Ancients",
-              version: "v1.0.0",
-              localActions: true,
-              saveLoad: {
-                mode: "load",
-                slots: [null, null, null]
-              },
-              entries: [
-                { id: "start", label: "Start" },
-                { id: "load", label: "Load" },
-                { id: "credits", label: "Credits", disabled: true }
-              ]
-            }
           },
           {
             id: "wood-ui",
@@ -191,10 +163,6 @@ export default {
             id: "my-tooltip",
             component: TooltipComponent,
             attachToSprite: true
-          },
-          {
-            id: "fade",
-            component: FadeComponent,
           },
           {
             id: "hud",

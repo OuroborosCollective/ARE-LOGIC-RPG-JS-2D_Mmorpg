@@ -24,6 +24,78 @@
     </style>
   </head>
   <body class="rpg-ui-app">
+    <!-- Login/Register Overlay -->
+    <div id="loginOverlay" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);font-family:'Fredoka',sans-serif;z-index:99999;padding:16px;box-sizing:border-box;">
+      <div style="width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:24px;">
+        <div style="text-align:center;">
+          <h1 style="font-size:clamp(28px,7vw,48px);color:#ffd700;margin:0;text-shadow:0 0 20px rgba(255,215,0,0.4);letter-spacing:4px;">CHRONICLES</h1>
+          <p style="font-size:clamp(14px,3.5vw,18px);color:rgba(255,255,255,0.6);margin:4px 0 0;letter-spacing:2px;">of the Ancients</p>
+        </div>
+        <div style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;backdrop-filter:blur(10px);">
+          <div style="display:flex;gap:8px;margin-bottom:20px;" id="loginTabs">
+            <button onclick="switchTab('login')" id="tabLogin" style="flex:1;padding:10px;border:1px solid #ffd700;border-radius:8px;background:rgba(255,215,0,0.15);color:#ffd700;font-family:inherit;font-size:15px;cursor:pointer;">Login</button>
+            <button onclick="switchTab('register')" id="tabRegister" style="flex:1;padding:10px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;background:transparent;color:rgba(255,255,255,0.5);font-family:inherit;font-size:15px;cursor:pointer;">Register</button>
+          </div>
+          <form onsubmit="return handleAuth(event)" style="display:flex;flex-direction:column;gap:12px;">
+            <input id="authEmail" type="email" placeholder="Email" required autocomplete="email" style="width:100%;padding:12px 14px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;background:rgba(0,0,0,0.3);color:#fff;font-family:inherit;font-size:15px;outline:none;box-sizing:border-box;" />
+            <input id="authPassword" type="password" placeholder="Password" required autocomplete="current-password" style="width:100%;padding:12px 14px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;background:rgba(0,0,0,0.3);color:#fff;font-family:inherit;font-size:15px;outline:none;box-sizing:border-box;" />
+            <div id="authError" style="color:#ff6b6b;font-size:13px;text-align:center;display:none;"></div>
+            <button type="submit" id="authSubmit" style="width:100%;padding:14px;border:none;border-radius:8px;background:linear-gradient(135deg,#ffd700,#f0a500);color:#1a1a2e;font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;margin-top:4px;">Enter World</button>
+          </form>
+        </div>
+        <div style="color:rgba(255,255,255,0.25);font-size:12px;">v1.0.0</div>
+      </div>
+    </div>
+    <script>
+      let authMode = 'login';
+      function switchTab(mode) {
+        authMode = mode;
+        document.getElementById('tabLogin').style.background = mode === 'login' ? 'rgba(255,215,0,0.15)' : 'transparent';
+        document.getElementById('tabLogin').style.borderColor = mode === 'login' ? '#ffd700' : 'rgba(255,255,255,0.15)';
+        document.getElementById('tabLogin').style.color = mode === 'login' ? '#ffd700' : 'rgba(255,255,255,0.5)';
+        document.getElementById('tabRegister').style.background = mode === 'register' ? 'rgba(255,215,0,0.15)' : 'transparent';
+        document.getElementById('tabRegister').style.borderColor = mode === 'register' ? '#ffd700' : 'rgba(255,255,255,0.15)';
+        document.getElementById('tabRegister').style.color = mode === 'register' ? '#ffd700' : 'rgba(255,255,255,0.5)';
+        document.getElementById('authSubmit').textContent = mode === 'login' ? 'Enter World' : 'Create Account';
+        document.getElementById('authPassword').placeholder = mode === 'register' ? 'Password (min 4 chars)' : 'Password';
+        document.getElementById('authError').style.display = 'none';
+      }
+      async function handleAuth(e) {
+        e.preventDefault();
+        var errEl = document.getElementById('authError');
+        errEl.style.display = 'none';
+        var btn = document.getElementById('authSubmit');
+        btn.disabled = true; btn.textContent = 'Please wait...';
+        try {
+          var endpoint = authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
+          var res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: document.getElementById('authEmail').value, password: document.getElementById('authPassword').value }) });
+          var data = await res.json();
+          if (data.token) {
+            localStorage.setItem('rpg_auth_token', data.token);
+            document.getElementById('loginOverlay').style.display = 'none';
+          } else {
+            errEl.textContent = data.error || 'Something went wrong';
+            errEl.style.display = 'block';
+          }
+        } catch (err) {
+          errEl.textContent = 'Network error. Please try again.';
+          errEl.style.display = 'block';
+        }
+        btn.disabled = false;
+        btn.textContent = authMode === 'login' ? 'Enter World' : 'Create Account';
+        return false;
+      }
+      (function() {
+        var token = localStorage.getItem('rpg_auth_token');
+        if (token) {
+          fetch('/api/auth/session', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (d.valid) document.getElementById('loginOverlay').style.display = 'none'; })
+            .catch(function() {});
+        }
+      })();
+    </script>
+
     <div id="rpg"></div>
 
     <!-- Side menu for premium features -->

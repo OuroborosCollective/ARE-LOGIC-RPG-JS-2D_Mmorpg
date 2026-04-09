@@ -324,6 +324,7 @@ export class RpgGui {
       
       // Auto display Vue components if enabled
       if (guiInstance.autoDisplay) {
+        guiInstance.display.set(true);
         this._notifyVueGui(guiId, true, gui.data || {});
       }
       return;

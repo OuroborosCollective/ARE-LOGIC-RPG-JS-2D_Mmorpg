@@ -9,46 +9,58 @@ on:
       - "*.md"
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        run: |
-          docker build -t rpgjs-game:latest .
-
-      - name: Save Docker image as tarball
-        run: |
-          docker save rpgjs-game:latest | gzip > rpgjs-game.tar.gz
-
-      - name: Copy image to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASSWORD }}
-          source: rpgjs-game.tar.gz
-          target: /tmp
-
-      - name: Deploy on VPS
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
+          command_timeout: 30m
           script: |
-            docker load < /tmp/rpgjs-game.tar.gz
+            set -e
+
+            APP_DIR="/opt/rpgjs-game"
+
+            # Clone or pull latest code
+            if [ -d "$APP_DIR/.git" ]; then
+              cd "$APP_DIR"
+              git fetch origin v5
+              git reset --hard origin/v5
+            else
+              rm -rf "$APP_DIR"
+              git clone --branch v5 --single-branch --depth 1 https://github.com/${{ github.repository }}.git "$APP_DIR"
+              cd "$APP_DIR"
+            fi
+
+            # Install dependencies
+            pnpm install --no-frozen-lockfile
+
+            # Build all workspace packages
+            pnpm build
+
+            # Build @rpgjs/vue (not in main build order but needed by sample-dev)
+            cd packages/vue && npm run build && cd "$APP_DIR"
+
+            # Build MMORPG production bundle
+            cd samples/sample-dev
+            RPG_TYPE=mmorpg npx vite build
+            cd "$APP_DIR"
+
+            # Restart Docker container
             docker stop rpgjs-game 2>/dev/null || true
             docker rm rpgjs-game 2>/dev/null || true
             docker run -d \
               --name rpgjs-game \
               --restart unless-stopped \
               -p 3000:3000 \
-              rpgjs-game:latest
-            rm -f /tmp/rpgjs-game.tar.gz
-            docker image prune -f
+              -v /opt/rpgjs-game:/app:ro \
+              -w /app/samples/sample-dev \
+              -e NODE_ENV=production \
+              -e PORT=3000 \
+              node:20-slim \
+              node dist/server/express.js
+
+            echo "Deployed successfully! Game running on port 3000"

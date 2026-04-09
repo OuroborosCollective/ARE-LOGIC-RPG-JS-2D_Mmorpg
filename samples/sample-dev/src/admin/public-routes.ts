@@ -22,8 +22,46 @@ import {
   removeCustomTexture,
 } from "../services/housing";
 import { createChatMessage, getChatHistory } from "../services/chat";
+import {
+  registerUser,
+  loginUser,
+  validateSession,
+  logoutUser,
+} from "../services/auth";
 
 export function registerPublicRoutes(app: Express): void {
+  app.post("/api/auth/register", (req: Request, res: Response) => {
+    const { email, password } = (req as any).jsonBody || {};
+    const result = registerUser(email, password);
+    if (result.success) {
+      res.json({ token: result.token });
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  });
+
+  app.post("/api/auth/login", (req: Request, res: Response) => {
+    const { email, password } = (req as any).jsonBody || {};
+    const result = loginUser(email, password);
+    if (result.success) {
+      res.json({ token: result.token });
+    } else {
+      res.status(401).json({ error: result.error });
+    }
+  });
+
+  app.get("/api/auth/session", (req: Request, res: Response) => {
+    const token = req.headers["authorization"]?.replace("Bearer ", "") || "";
+    const session = validateSession(token);
+    res.json(session);
+  });
+
+  app.post("/api/auth/logout", (req: Request, res: Response) => {
+    const token = req.headers["authorization"]?.replace("Bearer ", "") || "";
+    if (token) logoutUser(token);
+    res.json({ success: true });
+  });
+
   app.get("/api/premium/status/:playerId", (req: Request, res: Response) => {
     res.json(getPremiumStatus(req.params.playerId));
   });

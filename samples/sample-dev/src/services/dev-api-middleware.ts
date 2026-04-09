@@ -32,6 +32,7 @@ import {
   removeCustomTexture,
 } from "./housing";
 import { createChatMessage, getChatHistory } from "./chat";
+import { registerUser, loginUser, validateSession, logoutUser } from "./auth";
 
 function readBody(req: IncomingMessage): Promise<any> {
   return new Promise((resolve) => {
@@ -85,6 +86,30 @@ export function createApiMiddleware() {
     const body = method === "POST" || method === "PUT" || method === "DELETE"
       ? await readBody(req)
       : {};
+
+    // --- Auth routes ---
+    if (pathname === "/api/auth/register" && method === "POST") {
+      const result = registerUser(body.email, body.password);
+      return result.success ? json(res, { token: result.token }) : json(res, { error: result.error }, 400);
+    }
+
+    if (pathname === "/api/auth/login" && method === "POST") {
+      const result = loginUser(body.email, body.password);
+      return result.success ? json(res, { token: result.token }) : json(res, { error: result.error }, 401);
+    }
+
+    if (pathname === "/api/auth/session" && method === "GET") {
+      const authHeader = req.headers["authorization"] as string || "";
+      const token = authHeader.replace("Bearer ", "");
+      return json(res, validateSession(token));
+    }
+
+    if (pathname === "/api/auth/logout" && method === "POST") {
+      const authHeader = req.headers["authorization"] as string || "";
+      const token = authHeader.replace("Bearer ", "");
+      if (token) logoutUser(token);
+      return json(res, { success: true });
+    }
 
     // --- Admin routes ---
     if (pathname === "/api/admin/login" && method === "POST") {
