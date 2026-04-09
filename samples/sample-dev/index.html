@@ -74,6 +74,7 @@
           if (data.token) {
             localStorage.setItem('rpg_auth_token', data.token);
             document.getElementById('loginOverlay').style.display = 'none';
+            setTimeout(function() { window.dispatchEvent(new Event('resize')); }, 100);
           } else {
             errEl.textContent = data.error || 'Something went wrong';
             errEl.style.display = 'block';
@@ -91,7 +92,7 @@
         if (token) {
           fetch('/api/auth/session', { headers: { 'Authorization': 'Bearer ' + token } })
             .then(function(r) { return r.json(); })
-            .then(function(d) { if (d.valid) document.getElementById('loginOverlay').style.display = 'none'; })
+            .then(function(d) { if (d.valid) { document.getElementById('loginOverlay').style.display = 'none'; setTimeout(function() { window.dispatchEvent(new Event('resize')); }, 100); } })
             .catch(function() {});
         }
       })();

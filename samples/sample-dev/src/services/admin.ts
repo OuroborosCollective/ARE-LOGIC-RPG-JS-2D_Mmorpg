@@ -11,8 +11,8 @@ export interface ToplistEntry {
   enabled: boolean;
 }
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "2N00py123+++";
 
 const activeSessions = new Set<string>();
 
