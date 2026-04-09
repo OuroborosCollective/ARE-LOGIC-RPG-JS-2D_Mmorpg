@@ -244,4 +244,42 @@ export function registerPublicRoutes(app: Express): void {
     const msg = createChatMessage(playerId, playerName || "Anonymous", text);
     res.json(msg);
   });
+
+  app.get("/api/world/heuristics", async (_req: Request, res: Response) => {
+    try {
+      const { handleGetHeuristics } = await import("../server/api/heuristic.api");
+      res.json(handleGetHeuristics());
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/world/heuristics", async (req: Request, res: Response) => {
+    try {
+      const { handlePostHeuristics } = await import("../server/api/heuristic.api");
+      res.json(handlePostHeuristics((req as any).jsonBody || {}));
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/world/chunks", async (_req: Request, res: Response) => {
+    try {
+      const { handleChunkListRequest } = await import("../server/api/chunk.api");
+      res.json(await handleChunkListRequest());
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/world/chunks/:chunkId", async (req: Request, res: Response) => {
+    try {
+      const { handleChunkGetRequest } = await import("../server/api/chunk.api");
+      const chunk = await handleChunkGetRequest(req.params.chunkId);
+      if (chunk) res.json(chunk);
+      else res.status(404).json({ error: "Chunk not found" });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 }
