@@ -1,7 +1,7 @@
 FROM node:20-slim
 
 RUN corepack enable && corepack prepare pnpm@10.25.0 --activate
-WORKDIR /build
+WORKDIR /app
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
 
@@ -30,18 +30,9 @@ RUN pnpm build
 RUN cd packages/vue && npm run build
 RUN cd samples/sample-dev && RPG_TYPE=mmorpg npx vite build
 
-# Move production artifacts to /app and remove build sources
-RUN mkdir -p /app && \
-    cp -r samples/sample-dev/dist /app/dist && \
-    cp -r samples/sample-dev/world_data /app/world_data && \
-    cp -r samples/sample-dev/node_modules /app/node_modules && \
-    cp -r node_modules/.pnpm /app/node_modules/.pnpm
-
-WORKDIR /app
-RUN rm -rf /build
-
 ENV NODE_ENV=production
 ENV PORT=3000
 EXPOSE 3000
 
+WORKDIR /app/samples/sample-dev
 CMD ["node", "dist/server/express.js"]
