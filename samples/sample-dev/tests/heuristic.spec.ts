@@ -28,8 +28,7 @@ describe('Heuristical Game Features', () => {
 
   describe('updateHeuristics', () => {
     it('should calculate new H correctly with given E', () => {
-      const E = new Array(13).fill(0);
-      E[0] = 1;
+      const E = [0,0,0.3,0.5,0.2,0,0,0,0,0,0,0,0];
 
       const newH = updateHeuristics(E);
 
@@ -99,6 +98,22 @@ describe('Heuristical Game Features', () => {
         const newH = updateHeuristics(E);
 
         expect(newH[8]).toBe(0.2); // H9 Conflict
+    });
+
+    it('discover action affects H6 (Discovery) and H8 (Knowledge)', () => {
+        const E = [0,0,0,0,0,0.5,0,0.5,0,0.2,0,0,0.3];
+        const newH = updateHeuristics(E);
+
+        expect(newH[5]).toBe(0.5); // H6 Discovery
+        expect(newH[7]).toBe(0.5); // H8 Knowledge
+    });
+
+    it('social action affects H9 (Conflict) and H10 (Chaos)', () => {
+        const E = [0,0,0.2,0.2,0.1,0,0,0.2,0.5,0.3,0.3,0,0];
+        const newH = updateHeuristics(E);
+
+        expect(newH[8]).toBe(0.5); // H9 Conflict
+        expect(newH[9]).toBe(0.3); // H10 Chaos
     });
   });
 
