@@ -28,14 +28,18 @@ describe('Heuristical Game Features', () => {
 
   describe('updateHeuristics', () => {
     it('should calculate new H correctly with given E', () => {
+      // Trade vector: [0,0,0.3,0.5,0.2,0,0,0,0,0,0,0,0]
       const E = new Array(13).fill(0);
-      E[0] = 1;
+      E[2] = 0.3;
+      E[3] = 0.5;
 
       const newH = updateHeuristics(E);
 
-      // Trade vector: [0,0,0.3,0.5,0.2,0,0,0,0,0,0,0,0]
-      expect(H[2]).toBe(0.3); // H3 (index 2) Market Velocity
-      expect(H[3]).toBe(0.5); // H4 (index 3) Stability
+      expect(newH[2]).toBe(0.3); // H3 (index 2) Market Velocity
+      expect(newH[3]).toBe(0.5); // H4 (index 3) Stability
+
+      expect(H[2]).toBe(0.3);
+      expect(H[3]).toBe(0.5);
     });
 
     it('should apply influence matrix M correctly', () => {
